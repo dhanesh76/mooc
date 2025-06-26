@@ -1,0 +1,141 @@
+Working with **date and time in Java** is a common task, and it's handled primarily through the `java.time` package (introduced in Java 8). Here's a structured overview to help you understand and work with date and time effectively:
+
+---
+
+### ✅ **1. Important Classes in `java.time`**
+
+| Class               | Description                                 |
+| ------------------- | ------------------------------------------- |
+| `LocalDate`         | Date only (e.g., 2025-06-21)                |
+| `LocalTime`         | Time only (e.g., 14:35:50)                  |
+| `LocalDateTime`     | Date + Time without timezone                |
+| `ZonedDateTime`     | Date + Time + Timezone                      |
+| `Instant`           | Timestamp (UTC)                             |
+| `Duration`          | Time-based amount (e.g., 3 hours, 25 mins)  |
+| `Period`            | Date-based amount (e.g., 2 years, 5 months) |
+| `DateTimeFormatter` | Format and parse date/time                  |
+
+---
+
+### ✅ **2. Getting Current Date/Time**
+
+```java
+LocalDate date = LocalDate.now();
+LocalTime time = LocalTime.now();
+LocalDateTime dateTime = LocalDateTime.now();
+ZonedDateTime zonedDateTime = ZonedDateTime.now();
+Instant instant = Instant.now();
+```
+
+---
+
+### ✅ **3. Creating Specific Date/Time**
+
+```java
+LocalDate date = LocalDate.of(2025, 6, 21);
+LocalTime time = LocalTime.of(14, 30, 0);
+LocalDateTime dateTime = LocalDateTime.of(2025, 6, 21, 14, 30);
+```
+
+---
+
+### ✅ **4. Formatting Date/Time**
+
+```java
+LocalDate date = LocalDate.now();
+DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+String formatted = date.format(formatter);  // e.g., "21-06-2025"
+```
+
+---
+
+### ✅ **5. Parsing Date/Time from String**
+
+```java
+String dateStr = "21-06-2025";
+DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+LocalDate parsedDate = LocalDate.parse(dateStr, formatter);
+```
+
+---
+
+### ✅ **6. Adding/Subtracting Dates and Times**
+
+```java
+LocalDate date = LocalDate.now();
+date = date.plusDays(5);        // Add 5 days
+date = date.minusMonths(2);     // Subtract 2 months
+
+LocalTime time = LocalTime.now();
+time = time.plusHours(3);       // Add 3 hours
+```
+
+---
+
+### ✅ **7. Comparing Dates and Times**
+
+```java
+LocalDate d1 = LocalDate.of(2025, 6, 21);
+LocalDate d2 = LocalDate.of(2025, 12, 25);
+
+boolean isBefore = d1.isBefore(d2);   // true
+boolean isAfter = d1.isAfter(d2);     // false
+boolean isEqual = d1.equals(d2);      // false
+```
+
+---
+
+### ✅ **8. Calculating Period and Duration**
+
+```java
+// Period between two dates
+LocalDate start = LocalDate.of(2024, 1, 1);
+LocalDate end = LocalDate.of(2025, 6, 21);
+Period period = Period.between(start, end);  // e.g., P1Y5M20D
+
+// Duration between two times
+LocalTime t1 = LocalTime.of(10, 0);
+LocalTime t2 = LocalTime.of(13, 30);
+Duration duration = Duration.between(t1, t2);  // PT3H30M
+```
+
+---
+
+### ✅ **9. Time Zones**
+
+```java
+ZonedDateTime nowInIndia = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+ZonedDateTime nowInUS = nowInIndia.withZoneSameInstant(ZoneId.of("America/New_York"));
+```
+
+---
+
+### ✅ **10. Legacy Support (`java.util.Date` and `Calendar`)**
+
+These older classes (`Date`, `Calendar`, `SimpleDateFormat`) are largely replaced by the modern `java.time` package. Use them **only if working with legacy code**.
+
+To convert:
+
+```java
+Date date = new Date();
+Instant instant = date.toInstant();
+LocalDateTime ldt = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+```
+
+---
+
+### ✅ Summary
+
+| Task                  | Class Used          |
+| --------------------- | ------------------- |
+| Date only             | `LocalDate`         |
+| Time only             | `LocalTime`         |
+| Date + Time           | `LocalDateTime`     |
+| With timezone         | `ZonedDateTime`     |
+| Format/Parse          | `DateTimeFormatter` |
+| Durations (hours/min) | `Duration`          |
+| Periods (days/months) | `Period`            |
+
+---
+
+If you'd like hands-on exercises or examples with inputs and outputs, let me know!
