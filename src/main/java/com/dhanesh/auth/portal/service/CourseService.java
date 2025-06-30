@@ -111,7 +111,6 @@ public class CourseService {
         Query query = new Query(criteria);
         List<Course> filteredCourses = mongoTemplate.find(query, Course.class);
 
-        // Personalization kicks in here ⬇️
         return rankByScore(filteredCourses, userId);
     }
 
