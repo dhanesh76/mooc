@@ -36,4 +36,13 @@ public class AdminUserController {
     ResponseEntity<List<Users>> users(){
         return ResponseEntity.ok().body(adminUserService.getAllusers());
     }
+
+    @DeleteMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    ResponseEntity<Object> deleteUser(@RequestParam String username){
+        boolean response = adminUserService.deleteUser(username);
+        
+        return response == true ? ResponseEntity.noContent().build() : 
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User Not Found");
+    }
 }

@@ -29,4 +29,8 @@ public class Course {
     private String url;
     private String imageUrl;
     private LocalDateTime lastUpdated;
+
+    private long shareCount;
+    private long saveCount;
+
 }

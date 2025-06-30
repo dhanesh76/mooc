@@ -1,10 +1,12 @@
 package com.dhanesh.auth.portal.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.dhanesh.auth.portal.entity.SavedCourse;
+import com.dhanesh.auth.portal.repository.CourseRepository;
 import com.dhanesh.auth.portal.repository.SavedCourseRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -13,7 +15,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SavedCourseService {
     private final SavedCourseRepository savedCourseRepository;
-    
+    private final CourseRepository courseRepository;
+
     //add course to saved 
     public SavedCourse saveCourse(String userId, String courseId){
         
@@ -25,13 +28,24 @@ public class SavedCourseService {
                                 .builder()
                                 .courseId(courseId)
                                 .userId(userId)
+                                .savedAt(LocalDateTime.now())
                                 .build();
+
+        courseRepository.findById(courseId).ifPresent(c -> {
+            c.setSaveCount(c.getSaveCount() + 1);
+            courseRepository.save(c);
+        });
 
         return savedCourseRepository.save(course);
     }
 
     //remove course from saved 
     public void removeSavedCourse(String userId, String courseId){
+        courseRepository.findById(courseId).ifPresent(c -> {
+            c.setSaveCount(Math.max(0, c.getSaveCount() - 1));
+            courseRepository.save(c);
+        });
+
         savedCourseRepository.deleteByUserIdAndCourseId(userId, courseId);
     }
 
@@ -48,5 +62,4 @@ public class SavedCourseService {
     public long getSavedCourseCount(String userId) {
         return savedCourseRepository.countByUserId(userId);
     }
-
 }

@@ -14,20 +14,20 @@ import java.util.List;
 public class StudentProfile {
 
     @Id
-    private String userId; // same as Users table ID
+    private String id; // maps to userId from users table
 
-    private String fullName;
+    private String username;
     private String email;
+    private String fullName;
     private String phoneNumber;
 
-    private String educationLevel; // Enum recommended: DIPLOMA, UG, PG, SCHOOL
+    private String educationLevel;           // e.g., DIPLOMA, UG, PG, SCHOOL
     private String preferredPlatform;
+    private String preferredDifficultyLevel; // e.g., BEGINNER, INTERMEDIATE, ADVANCED
 
     private List<String> primaryInterests;
-    private String learningGoals;
-
-    private String preferredDifficultyLevel; // BEGINNER, INTERMEDIATE, ADVANCED
     private List<String> hobbies;
+    private String learningGoals;
 
     private boolean profileCompleted;
 }

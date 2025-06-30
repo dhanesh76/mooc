@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 
 @RestController
-@RequestMapping("/admin/dashboard")
 @RequiredArgsConstructor
+@RequestMapping("/admin/dashboard")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminDashboardController {
 

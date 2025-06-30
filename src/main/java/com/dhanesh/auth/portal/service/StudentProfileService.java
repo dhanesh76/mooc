@@ -2,7 +2,10 @@ package com.dhanesh.auth.portal.service;
 
 import com.dhanesh.auth.portal.dto.StudentProfileRequest;
 import com.dhanesh.auth.portal.entity.StudentProfile;
+import com.dhanesh.auth.portal.entity.Users;
 import com.dhanesh.auth.portal.repository.StudentProfileRepository;
+import com.dhanesh.auth.portal.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,12 +14,21 @@ import org.springframework.stereotype.Service;
 public class StudentProfileService {
 
     private final StudentProfileRepository repository;
+    private final UserRepository userRepository;
 
-    public StudentProfile createOrUpdateProfile(String userId, StudentProfileRequest request) {
+    public StudentProfile createProfile(String id, StudentProfileRequest request) {
+        if (repository.existsById(id)) {
+            throw new IllegalArgumentException("Profile already exists for user: " + id);
+        }
+
+        Users user = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("User not found for ID: " + id));
+
         StudentProfile profile = StudentProfile.builder()
-            .userId(userId)
+            .id(id)
+            .username(user.getUsername())
+            .email(user.getEmail())
             .fullName(request.fullName())
-            .email(request.email())
             .phoneNumber(request.phoneNumber())
             .educationLevel(request.educationLevel())
             .preferredPlatform(request.preferredPlatform())
@@ -30,11 +42,28 @@ public class StudentProfileService {
         return repository.save(profile);
     }
 
-    public boolean isProfileCompleted(String userId) {
-        return repository.existsByUserId(userId);
+    public StudentProfile updateProfile(String id, StudentProfileRequest request) {
+        StudentProfile profile = repository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Profile not found for user: " + id));
+
+        profile.setFullName(request.fullName());
+        profile.setPhoneNumber(request.phoneNumber());
+        profile.setEducationLevel(request.educationLevel());
+        profile.setPreferredPlatform(request.preferredPlatform());
+        profile.setPrimaryInterests(request.primaryInterests());
+        profile.setLearningGoals(request.learningGoals());
+        profile.setPreferredDifficultyLevel(request.preferredDifficultyLevel());
+        profile.setHobbies(request.hobbies());
+
+        return repository.save(profile);
     }
 
-    public StudentProfile getProfile(String userId) {
-        return repository.findById(userId).orElse(null);
+    public boolean isProfileCompleted(String id) {
+        return repository.existsById(id);
+    }
+
+    public StudentProfile getProfile(String id) {
+        return repository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Profile not found for user: " + id));
     }
 }

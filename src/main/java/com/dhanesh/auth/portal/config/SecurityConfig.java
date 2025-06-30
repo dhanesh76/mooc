@@ -46,15 +46,13 @@ public class SecurityConfig {
                     "/api/auth/request-otp", 
                     "/api/auth/verify-otp", 
                     "/api/auth/forgot-password", 
-                    "/api/auth/reset-password",
-                    "/users/all"
+                    "/api/auth/reset-password"
                 ).permitAll() // public endpoints
-
+                
+                .requestMatchers(HttpMethod.GET, "/courses")
+                .permitAll()
+                
                 .requestMatchers("/admin/**").hasRole("ADMIN") // role-based access
-                .requestMatchers(HttpMethod.POST, "/courses").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/courses/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/courses/**").hasRole("ADMIN")
-
                 .anyRequest().authenticated() // all other requests require authentication
             )
 

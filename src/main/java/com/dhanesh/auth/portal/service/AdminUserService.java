@@ -30,4 +30,13 @@ public class AdminUserService {
     public List<Users> getAllusers(){
         return userRepository.findAll();
     }
+
+    public boolean deleteUser(String username) {
+        Optional<Users> user = userRepository.findByUsername(username);
+        if (user.isPresent()) {
+            userRepository.delete(user.get());
+            return true;
+        }
+        return false;
+    }
 }

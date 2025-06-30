@@ -1,5 +1,7 @@
 package com.dhanesh.auth.portal.service;
 
+import java.time.Instant;
+
 import org.springframework.stereotype.Service;
 
 import com.dhanesh.auth.portal.dto.FeedbackRequest;
@@ -25,6 +27,7 @@ public class FeedbackService {
             .courseQualityRating(request.courseQualityRating())
             .feedback(request.feedback())
             .appExperience(request.appExperience())
+            .createdAt(Instant.now()) // Set the current timestamp
             .build();
     
             return feedbackRepository.save(feedback);

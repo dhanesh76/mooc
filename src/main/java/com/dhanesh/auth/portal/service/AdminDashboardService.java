@@ -11,6 +11,7 @@ import com.dhanesh.auth.portal.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -32,23 +33,33 @@ public class AdminDashboardService {
 
         // Fetch course stats
         long totalCourses = courseRepository.count();
-        List<Course> recentCourses = courseRepository.findAll(PageRequest.of(0, 5)).getContent();
+        List<Course> recentCourses = courseRepository
+            .findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "lastUpdated")))
+            .getContent();
 
         // Fetch user stats
         long totalUsers = userRepository.count();
-        List<Users> recentUsers = userRepository.findAll(PageRequest.of(0, 5)).getContent();
+        List<Users> recentUsers = userRepository
+            .findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt")))
+            .getContent();
 
         // Feedback
         long feedbackCount = feedbackRepository.count();
-        List<Feedback> recentFeedback = feedbackRepository.findAll(PageRequest.of(0, 5)).getContent();
+        List<Feedback> recentFeedback = feedbackRepository
+            .findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt")))
+            .getContent();
 
         // Platform Distribution
-        Map<String, Long> platformDist = courseRepository.findAll().stream()
+        Map<String, Long> platformDist = courseRepository
+            .findAll()
+            .stream()
             .filter(c -> c.getPlatform() != null)
             .collect(Collectors.groupingBy(Course::getPlatform, Collectors.counting()));
 
         // Interest Area Popularity
-        Map<String, Long> interestStats = studentProfileRepository.findAll().stream()
+        Map<String, Long> interestStats = studentProfileRepository
+            .findAll()
+            .stream()
             .filter(p -> p.getPrimaryInterests() != null)
             .flatMap(p -> p.getPrimaryInterests().stream())
             .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));

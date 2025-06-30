@@ -1,6 +1,9 @@
 package com.dhanesh.auth.portal.entity;
 
 import lombok.*;
+
+import java.time.Instant;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -26,4 +29,6 @@ public class Feedback {
     String feedback;        //long text 
 
     String appExperience;    //Awseome, Good, Need Improvement 
+
+    Instant createdAt;         // Timestamp of feedback creation
 }

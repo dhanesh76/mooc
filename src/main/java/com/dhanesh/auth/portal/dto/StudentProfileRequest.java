@@ -5,7 +5,6 @@ import java.util.List;
 
 public record StudentProfileRequest(
     @NotBlank String fullName,
-    @NotBlank String email,
     String phoneNumber,
     @NotBlank String educationLevel,
     @NotBlank String preferredPlatform,

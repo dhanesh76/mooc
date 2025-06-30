@@ -1,16 +1,22 @@
 package com.dhanesh.auth.portal.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.dhanesh.auth.portal.entity.SavedCourse;
+import com.dhanesh.auth.portal.entity.Users;
 import com.dhanesh.auth.portal.service.SavedCourseService;
 
 import lombok.RequiredArgsConstructor;
-
-
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/saved-courses")
@@ -21,41 +27,34 @@ public class SavedCourseController {
 
     @PostMapping
     public ResponseEntity<SavedCourse> saveCourse(
-            @RequestParam String userId,
-            @RequestParam String courseId
-    ) {
-        
-        return ResponseEntity.ok(savedCourseService.saveCourse(userId, courseId));
+            @AuthenticationPrincipal Users user,
+            @RequestParam String courseId) {
+        return ResponseEntity.ok(savedCourseService.saveCourse(user.getId(), courseId));
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<SavedCourse>> getSavedCourses(@PathVariable String userId) {
-        return ResponseEntity.ok(savedCourseService.getSavedCourses(userId));
+    @GetMapping
+    public ResponseEntity<List<SavedCourse>> getSavedCourses(@AuthenticationPrincipal Users user) {
+        return ResponseEntity.ok(savedCourseService.getSavedCourses(user.getId()));
     }
 
     @GetMapping("/exists")
     public ResponseEntity<Boolean> isCourseSaved(
-            @RequestParam String userId,
-            @RequestParam String courseId
-    ) {
-        boolean exists = savedCourseService.isCourseSaved(userId, courseId);
+            @AuthenticationPrincipal Users user,
+            @RequestParam String courseId) {
+        boolean exists = savedCourseService.isCourseSaved(user.getId(), courseId);
         return ResponseEntity.ok(exists);
     }
 
-    //  Remove saved course
-    @DeleteMapping("/{userId}/{courseId}")
+    @DeleteMapping("/{courseId}")
     public ResponseEntity<Void> removeSavedCourse(
-            @PathVariable String userId,
-            @PathVariable String courseId
-    ) {
-        savedCourseService.removeSavedCourse(userId, courseId);
+            @AuthenticationPrincipal Users user,
+            @PathVariable String courseId) {
+        savedCourseService.removeSavedCourse(user.getId(), courseId);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{userId}/count")
-    public ResponseEntity<Long> countSavedCourses(@PathVariable String userId) {
-        long count = savedCourseService.getSavedCourseCount(userId);
-        return ResponseEntity.ok(count);
+    @GetMapping("/count")
+    public ResponseEntity<Long> countSavedCourses(@AuthenticationPrincipal Users user) {
+        return ResponseEntity.ok(savedCourseService.getSavedCourseCount(user.getId()));
     }
-
 }

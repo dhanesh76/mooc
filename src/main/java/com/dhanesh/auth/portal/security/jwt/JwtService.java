@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.dhanesh.auth.portal.entity.Users;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -30,9 +32,10 @@ public class JwtService {
     /**
      * Generates a JWT token for the given loginId (usually email or username).
      */
-    public String generateToken(String loginId) {
+    public String generateToken(Users user) {
         return Jwts.builder()
-                .subject(loginId)
+                .subject(user.getEmail())
+                .claim("role", user.getRole())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getKey(), Jwts.SIG.HS256) // Sign with HMAC-SHA256
