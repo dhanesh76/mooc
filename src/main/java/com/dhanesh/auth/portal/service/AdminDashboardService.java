@@ -2,10 +2,10 @@ package com.dhanesh.auth.portal.service;
 
 import com.dhanesh.auth.portal.dto.AdminDashboardResponse;
 import com.dhanesh.auth.portal.entity.Course;
-import com.dhanesh.auth.portal.entity.Feedback;
+import com.dhanesh.auth.portal.entity.CourseFeedback;
 import com.dhanesh.auth.portal.entity.Users;
+import com.dhanesh.auth.portal.repository.CourseFeedbackRepository;
 import com.dhanesh.auth.portal.repository.CourseRepository;
-import com.dhanesh.auth.portal.repository.FeedbackRepository;
 import com.dhanesh.auth.portal.repository.StudentProfileRepository;
 import com.dhanesh.auth.portal.repository.UserRepository;
 
@@ -18,12 +18,27 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Generates an overview of the system's state for the authenticated admin.
+ * 
+ * Includes:
+ * - Admin identity info
+ * - Total & recent courses
+ * - Total & recent users
+ * - Feedback count and recent feedbacks
+ * - Platform distribution statistics
+ * - Interest area popularity among students
+ *
+ * @param usernameOrEmail username or email extracted from the logged-in principal
+ * @return populated AdminDashboardResponse DTO
+ */
+
 @Service
 @RequiredArgsConstructor
 public class AdminDashboardService {
 
     private final CourseRepository courseRepository;
-    private final FeedbackRepository feedbackRepository;
+    private final CourseFeedbackRepository feedbackRepository;
     private final UserRepository userRepository;
     private final StudentProfileRepository studentProfileRepository;
 
@@ -45,7 +60,7 @@ public class AdminDashboardService {
 
         // Feedback
         long feedbackCount = feedbackRepository.count();
-        List<Feedback> recentFeedback = feedbackRepository
+        List<CourseFeedback> recentFeedback = feedbackRepository
             .findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt")))
             .getContent();
 

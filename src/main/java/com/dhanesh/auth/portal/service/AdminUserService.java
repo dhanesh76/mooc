@@ -15,22 +15,34 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminUserService {
+
     private final UserRepository userRepository;
 
+    /**
+     * Promote a user to ADMIN role.
+     * @param username username of the user
+     * @return true if successful, false if user not found
+     */
     public boolean promoteToAdmin(String username){
         Optional<Users> user = userRepository.findByUsername(username);
-
         user.ifPresent(u -> {
-                u.setRole("ADMIN"); 
-                userRepository.save(u);
-            });
+            u.setRole("ADMIN"); 
+            userRepository.save(u);
+        });
         return user.isPresent();
     }
 
-    public List<Users> getAllusers(){
+    /**
+     * Return all users in the system.
+     */
+    public List<Users> getAllUsers(){
         return userRepository.findAll();
     }
 
+    /**
+     * Delete user by username.
+     * @return true if deleted, false if user not found
+     */
     public boolean deleteUser(String username) {
         Optional<Users> user = userRepository.findByUsername(username);
         if (user.isPresent()) {

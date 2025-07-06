@@ -12,17 +12,20 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class ProfilePhototService {
+public class ProfilePhotoService {
 
     private final ProfilePhotoRepository profilePhotoRepository;
 
+    /**
+     * Uploads and stores profile photo for the given user ID.
+     */
     public void uploadPhoto(String id, MultipartFile photo) throws IllegalAccessException, IOException {
         if (photo.isEmpty()) {
             throw new IllegalAccessException("Photo can't be empty");
         }
 
         String contentType = photo.getContentType();
-        if (!(contentType.equals("image/png") || contentType.equals("image/jpeg"))) {
+        if (contentType == null || !(contentType.equals("image/png") || contentType.equals("image/jpeg"))) {
             throw new IllegalArgumentException("Only PNG and JPEG formats are supported");
         }
 
@@ -32,17 +35,23 @@ public class ProfilePhototService {
 
         profilePhoto.setUserId(id);
         profilePhoto.setPhoto(photo.getBytes());
-        profilePhoto.setContentType(contentType); // ✅ Store content type
+        profilePhoto.setContentType(contentType);
 
         profilePhotoRepository.save(profilePhoto);
     }
 
+    /**
+     * Returns the content type of the profile photo.
+     */
     public String getProfilePhotoContentType(String id) {
         ProfilePhoto profilePhoto = profilePhotoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Profile photo not found"));
         return profilePhoto.getContentType();
     }
 
+    /**
+     * Returns the raw image byte array for the given user ID.
+     */
     public byte[] getProfilePhoto(String id) {
         ProfilePhoto profilePhoto = profilePhotoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Profile photo not found"));

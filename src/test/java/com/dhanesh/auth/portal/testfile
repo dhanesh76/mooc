@@ -1,0 +1,23 @@
+{
+  "userId": "64ef0123abcd5678ef901234",
+  "courseFeedbacks": [
+    {
+      "courseId": "COURSE123",
+      "rating": 5,
+      "enrolled": true,
+      "comments": "Great content, well structured!"
+    },
+    {
+      "courseId": "COURSE456",
+      "rating": 3,
+      "enrolled": false,
+      "comments": "Not very relevant to me."
+    },
+    {
+      "courseId": "COURSE789",
+      "rating": 4,
+      "enrolled": true,
+      "comments": "Good match, enrolled immediately."
+    }
+  ]
+}

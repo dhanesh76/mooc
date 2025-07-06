@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
 
 /**
  * Filter that intercepts every request to check for a valid JWT token.
@@ -29,9 +30,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     @SuppressWarnings("")
     protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
         // Extract the Authorization header from the request

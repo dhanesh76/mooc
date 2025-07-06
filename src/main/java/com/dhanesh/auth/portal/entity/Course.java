@@ -32,5 +32,4 @@ public class Course {
 
     private long shareCount;
     private long saveCount;
-
 }

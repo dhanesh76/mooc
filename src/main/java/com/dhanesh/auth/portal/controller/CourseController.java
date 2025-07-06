@@ -1,34 +1,42 @@
 package com.dhanesh.auth.portal.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import com.dhanesh.auth.portal.dto.FilterCourseRequest;
 import com.dhanesh.auth.portal.entity.Course;
-import com.dhanesh.auth.portal.entity.Users;
+import com.dhanesh.auth.portal.security.userdetails.UserPrincipal;
 import com.dhanesh.auth.portal.service.CourseService;
 
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 
+/**
+ * Controller for public course-related actions including retrieval, filtering,
+ * searching, and share-link handling.
+ */
+@RestController
 @RequestMapping("/courses")
-@Controller
 @RequiredArgsConstructor
 public class CourseController {
+
     private final CourseService courseService;
 
+    /**
+     * Returns paginated list of all available courses.
+     *
+     * @param page the page number (default = 0)
+     * @param size the number of courses per page (default = 10)
+     * @return list of courses
+     */
     @GetMapping
     public ResponseEntity<List<Course>> getAllCourses(
             @RequestParam(defaultValue = "0") int page,
@@ -36,11 +44,12 @@ public class CourseController {
     ) {
         return ResponseEntity.ok(courseService.getAllCourses(page, size));
     }
-    
+
     /**
-     * Search Bar 
-     * @param q
-     * @return
+     * Performs search on courses by query string (used in search bar).
+     *
+     * @param q the search term
+     * @return list of matching courses
      */
     @GetMapping("/search")
     public ResponseEntity<List<Course>> searchCourses(@RequestParam String q) {
@@ -48,22 +57,25 @@ public class CourseController {
     }
 
     /**
-     * 
-     * @param request
-     * @return courses based on user interest(platform({}), domain({tags}), difficulty)
+     * Filters courses based on user's preferences (domain, difficulty, platform).
+     *
+     * @param principal the authenticated user
+     * @param request the filter options
+     * @return filtered course list
      */
     @PostMapping("/filter")
-    public ResponseEntity<List<Course>> filterCourses(@AuthenticationPrincipal Users user, @Valid @RequestBody FilterCourseRequest request) {
-        return ResponseEntity.ok(courseService.filterCourses(request, user.getId()));
+    public ResponseEntity<List<Course>> filterCourses(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody FilterCourseRequest request
+    ) {
+        return ResponseEntity.ok(courseService.filterCourses(request, principal.getUser().getId()));
     }
 
-    @GetMapping("/share/{courseId}")
-    public ResponseEntity<?> handleShareRedirect(@PathVariable String courseId, HttpServletResponse response) {
-        courseService.incrementShareCount(courseId);
-        String redirectUrl = "https://your-frontend.com/shared-course/" + courseId;
-
-        response.setHeader("Location", redirectUrl);
-        return ResponseEntity.status(302).build(); // temporary redirect
+    @GetMapping("/{courseId}")
+    public ResponseEntity<Object> getCourse(@PathVariable String courseId) {
+        Optional<Course> course = courseService.getCourseById(courseId);
+        
+       return course.isPresent() ? ResponseEntity.ok().body(course) 
+        : ResponseEntity.badRequest().body("Invalid COurse ID");
     }
-
 }

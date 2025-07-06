@@ -9,6 +9,9 @@ import com.dhanesh.auth.portal.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service for managing student profile logic.
+ */
 @Service
 @RequiredArgsConstructor
 public class StudentProfileService {
@@ -16,6 +19,14 @@ public class StudentProfileService {
     private final StudentProfileRepository repository;
     private final UserRepository userRepository;
 
+    /**
+     * Creates a new student profile if one doesn't already exist.
+     *
+     * @param id the user ID
+     * @param request the profile creation request data
+     * @return the created student profile
+     * @throws IllegalArgumentException if the profile already exists or user is not found
+     */
     public StudentProfile createProfile(String id, StudentProfileRequest request) {
         if (repository.existsById(id)) {
             throw new IllegalArgumentException("Profile already exists for user: " + id);
@@ -42,6 +53,14 @@ public class StudentProfileService {
         return repository.save(profile);
     }
 
+    /**
+     * Updates an existing student profile.
+     *
+     * @param id the user ID
+     * @param request the updated profile data
+     * @return the updated student profile
+     * @throws IllegalArgumentException if the profile is not found
+     */
     public StudentProfile updateProfile(String id, StudentProfileRequest request) {
         StudentProfile profile = repository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Profile not found for user: " + id));
@@ -58,10 +77,23 @@ public class StudentProfileService {
         return repository.save(profile);
     }
 
+    /**
+     * Checks if a profile exists (i.e., is completed) for the given user ID.
+     *
+     * @param id the user ID
+     * @return true if profile exists, false otherwise
+     */
     public boolean isProfileCompleted(String id) {
         return repository.existsById(id);
     }
 
+    /**
+     * Retrieves the student profile for a given user ID.
+     *
+     * @param id the user ID
+     * @return the student profile
+     * @throws IllegalArgumentException if the profile is not found
+     */
     public StudentProfile getProfile(String id) {
         return repository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Profile not found for user: " + id));

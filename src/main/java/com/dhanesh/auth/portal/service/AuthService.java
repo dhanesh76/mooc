@@ -1,5 +1,7 @@
 package com.dhanesh.auth.portal.service;
 
+import java.time.Instant;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -45,12 +47,14 @@ public class AuthService {
         validateUserUniqueness(username, email);
 
         // Create and persist new user
-        Users user = new Users();
+        Users user = new Users(); 
+        
         user.setUsername(username);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setRole("USER");
         user.setVerified(false);
+        user.setCreatedAt(Instant.now());
         user.setAuthProvider(AuthProvider.LOCAL);
 
         userRepo.save(user);
@@ -104,6 +108,7 @@ public class AuthService {
         String token = jwtService.generateToken(user);
 
         return new SigninResponse(
+            user.getId(),
             request.loginId(),
             user.getRole(),
             token,

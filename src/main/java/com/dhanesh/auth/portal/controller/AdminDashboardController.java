@@ -17,6 +17,10 @@ public class AdminDashboardController {
 
     private final AdminDashboardService dashboardService;
 
+    /**
+     * Returns admin dashboard details for the logged-in administrator.
+     * Uses the authenticated principal's username or email to fetch personalized data.
+     */
     @GetMapping
     public ResponseEntity<AdminDashboardResponse> getDashboard(Principal principal) {
         return ResponseEntity.ok(dashboardService.getDashboard(principal.getName()));

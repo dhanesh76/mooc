@@ -63,3 +63,4 @@ public class SavedCourseService {
         return savedCourseRepository.countByUserId(userId);
     }
 }
+

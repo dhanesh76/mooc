@@ -16,38 +16,48 @@ import lombok.RequiredArgsConstructor;
 
 import com.dhanesh.auth.portal.entity.Users;
 import com.dhanesh.auth.portal.repository.UserRepository;
-import com.dhanesh.auth.portal.service.ProfilePhototService;
+import com.dhanesh.auth.portal.security.userdetails.UserPrincipal;
+import com.dhanesh.auth.portal.service.ProfilePhotoService;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("users/profile-photo")
-public class ProfilePhototController {
-    
-    private final ProfilePhototService profilePhotoService;
+public class ProfilePhotoController {
+
+    private final ProfilePhotoService profilePhotoService;
     private final UserRepository userRepository;
 
+    /**
+     * Uploads a profile photo for the authenticated user.
+     * Accepts only PNG or JPEG.
+     *
+     * @param principal the authenticated user's principal
+     * @param photo     the image file to upload
+     */
     @PutMapping
-    public ResponseEntity<?> uploadPhoto(@AuthenticationPrincipal UserDetails userDetails, 
+    public ResponseEntity<?> uploadPhoto(
+        @AuthenticationPrincipal UserPrincipal principal,
         @RequestParam("file") MultipartFile photo
     ) throws IOException, IllegalAccessException {
         
-        Users user = userRepository
-            .findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new RuntimeException("User not found"));
-
-        profilePhotoService.uploadPhoto(user.getId(), photo);
+        profilePhotoService.uploadPhoto(principal.getUser().getId(), photo);
         return ResponseEntity.ok("Photo uploaded successfully");
     }
 
+    /**
+     * Fetches the profile photo of the authenticated user.
+     *
+     * @param userDetails the Spring Security user
+     * @return image bytes with correct content type
+     */
     @GetMapping
-    public ResponseEntity<byte[]> getProfilePhoto(@AuthenticationPrincipal UserDetails userDetails) {
-        
+    public ResponseEntity<byte[]> getProfilePhoto(@AuthenticationPrincipal UserPrincipal principal) {
         Users user = userRepository
-            .findByEmail(userDetails.getUsername())
+            .findByEmail(principal.getUsername())
             .orElseThrow(() -> new RuntimeException("User not found"));
 
         return ResponseEntity.ok()
             .header("Content-Type", profilePhotoService.getProfilePhotoContentType(user.getId()))
             .body(profilePhotoService.getProfilePhoto(user.getId()));
-    }    
+    }
 }
