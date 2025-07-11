@@ -1,6 +1,7 @@
 package com.dhanesh.auth.portal.service;
 
 import java.time.Instant;
+import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,140 +15,141 @@ import com.dhanesh.auth.portal.entity.AuthProvider;
 import com.dhanesh.auth.portal.entity.Users;
 import com.dhanesh.auth.portal.exception.AuthenticationFailedException;
 import com.dhanesh.auth.portal.exception.EmailAlreadyInUseException;
-import com.dhanesh.auth.portal.exception.EmailNotVerifiedException;
 import com.dhanesh.auth.portal.exception.UsernameAlreadyTakenException;
 import com.dhanesh.auth.portal.model.OtpPurpose;
 import com.dhanesh.auth.portal.repository.UserRepository;
 import com.dhanesh.auth.portal.security.jwt.JwtService;
+import com.dhanesh.auth.portal.service.Redis.RedisAuthService;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
-@Service 
-@AllArgsConstructor
-public class AuthService {  
+@Service
+@RequiredArgsConstructor
+public class AuthService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final OtpService otpService;
+    private final RedisAuthService redisAuthService;
 
     /**
-     * Handles user registration:
-     * - Validates uniqueness of email and username
-     * - Saves user with encoded password and default role
-     * - Sends OTP for email verification
+     * Initiates user registration by validating uniqueness and storing data in Redis.
      */
-    public SignupResponse signup(SignupRequest credentials){
+    public SignupResponse signup(SignupRequest credentials) {
         String username = credentials.username();
         String email = credentials.email();
-        String password = credentials.password();
 
-        // Check for existing username/email
-        validateUserUniqueness(username, email);
+        // Check if email/username already exists (DB or Redis cache)
+        if (userRepo.findByEmail(email).isPresent() || redisAuthService.existsByEmail(email)) {
+            throw new EmailAlreadyInUseException("Email already taken.");
+        }
 
-        // Create and persist new user
-        Users user = new Users(); 
-        
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setRole("USER");
-        user.setVerified(false);
-        user.setCreatedAt(Instant.now());
-        user.setAuthProvider(AuthProvider.LOCAL);
+        if (userRepo.findByUsername(username).isPresent() || redisAuthService.existsByUsername(username)) {
+            throw new UsernameAlreadyTakenException("Username already taken.");
+        }
 
-        userRepo.save(user);
+        // Store temp user data in Redis
+        String encodedPassword = passwordEncoder.encode(credentials.password());
+        SignupTempData signupData = new SignupTempData(username, email, encodedPassword);
+        redisAuthService.storeSignupData(email, signupData);
 
         // Send OTP for verification
         otpService.sendOtp(new OtpRequest(email, OtpPurpose.VERIFICATION));
 
-        /**
-         * Frontend should redirect to /verify-otp endpoint with:
-         * {
-         *   "email": "example@domain.com",
-         *   "otp": "123456",
-         *   "purpose": "VERIFICATION"
-         * }
-         */
-        return new SignupResponse(username, email, 
-            "Registered successfully. An OTP has been sent to your email for verification.", 
-            user.getAuthProvider());
+        return new SignupResponse(
+                username,
+                email,
+                "OTP sent to your email. Please verify to complete registration.",
+                AuthProvider.LOCAL
+        );
     }
 
     /**
-     * Handles user login:
-     * - Validates email/username existence
-     * - Verifies email confirmation
-     * - Authenticates credentials via AuthenticationManager
-     * - Generates and returns JWT if successful
+     * Authenticates a user using username/email and password.
      */
     public SigninResponse signin(SigninRequest request) {
-        Users user = userRepo
-            .findByUsernameOrEmail(request.loginId(), request.loginId())
-            .orElseThrow(() -> new AuthenticationFailedException("invalid credentials"));
+        Users user = userRepo.findByUsernameOrEmail(request.loginId(), request.loginId())
+                .orElseThrow(() -> new AuthenticationFailedException("Invalid credentials"));
 
-        // If not verified, send OTP and instruct user to verify
-        if (!user.isVerified()) {
-            otpService.sendOtp(new OtpRequest(user.getEmail(), OtpPurpose.VERIFICATION));
-            throw new EmailNotVerifiedException(user.getEmail(), 
-                "Email is not verified. Please check your inbox.");
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(user.getEmail(), request.password()));
+
+        if (!auth.isAuthenticated()) {
+            throw new AuthenticationFailedException("Authentication failed");
         }
 
-        // Authenticate credentials
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(user.getEmail(), request.password())
-        );
-
-        // Spring Security should already throw if invalid, but kept for completeness
-        if (!authentication.isAuthenticated()) {
-            throw new AuthenticationFailedException("Invalid email/username or password.");
-        }
-
-        // Generate token
         String token = jwtService.generateToken(user);
 
         return new SigninResponse(
-            user.getId(),
-            request.loginId(),
-            user.getRole(),
-            token,
-            jwtService.extractExpiration(token),
-            user.getAuthProvider()
+                user.getId(),
+                request.loginId(),
+                user.getRole(),
+                token,
+                jwtService.extractExpiration(token),
+                user.getAuthProvider()
         );
     }
 
     /**
-     * Marks a user as verified after successful OTP validation.
+     * Saves a verified user from Redis to DB after OTP verification.
      */
-    public void markUserVerified(String email){
-        Users user = userRepo.findByEmail(email)
-            .orElseThrow(() -> 
-                new AuthenticationFailedException("User not found with email: " + email));
+    public void saveNewUser(String email) {
+        SignupTempData tempData = redisAuthService.getSignupData(email)
+                .orElseThrow(() -> new RuntimeException("Session expired or not found"));
+
+        Users user = new Users();
+        user.setUsername(tempData.username());
+        user.setEmail(tempData.email());
+        user.setPassword(tempData.encodedPassword());
+        user.setAuthProvider(AuthProvider.LOCAL);
         user.setVerified(true);
+        user.setRole("USER");
+        user.setCreatedAt(Instant.now());
+
         userRepo.save(user);
+        redisAuthService.deleteSignupData(email);
     }
 
     /**
-     * Updates the user's password after OTP validation (forgot/reset password).
+     * Checks whether a registration session exists in Redis.
+     */
+    public boolean isRegisterSessionExpired(String email) {
+        return !redisAuthService.hasKey("signup:" + email);
+    }
+
+    /**
+     * Verifies reset token's validity for OTP-based password reset.
+     */
+    public Map<String, Object> validatePasswordResetToken(ResetPasswordRequest request, String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return Map.of("valid", false, "message", "Missing or invalid Authorization header.");
+        }
+
+        String token = authHeader.substring(7);
+
+        if (jwtService.isTokenExpired(token)) {
+            return Map.of("valid", false, "message", "Token expired.");
+        }
+
+        Boolean isVerified = jwtService.extractClaim(token, claims -> claims.get("otp_verified", Boolean.class));
+        String type = jwtService.extractClaim(token, claims -> claims.get("token_type", String.class));
+
+        if (!Boolean.TRUE.equals(isVerified) || !"otp".equals(type)) {
+            return Map.of("valid", false, "message", "Invalid or unauthorized token.");
+        }
+
+        return Map.of("valid", true, "message", "Token verified.");
+    }
+
+    /**
+     * Resets password after OTP verification.
      */
     public void resetPassword(ResetPasswordRequest request) {
         Users user = userRepo.findByEmail(request.email())
-            .orElseThrow(() -> new AuthenticationFailedException("User not found"));
-
+                .orElseThrow(() -> new AuthenticationFailedException("User not found"));
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepo.save(user);
-    }
-
-    /**
-     * Utility method to enforce unique username and email at signup.
-     */
-    private void validateUserUniqueness(String username, String email) {
-        if (userRepo.findByEmail(email).isPresent()) {
-            throw new EmailAlreadyInUseException("Email is already registered.");
-        }
-        if (userRepo.findByUsername(username).isPresent()) {
-            throw new UsernameAlreadyTakenException("Username is already taken.");
-        }
     }
 }

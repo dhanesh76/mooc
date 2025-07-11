@@ -4,20 +4,31 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
-
+import org.springframework.stereotype.Repository;
+import com.dhanesh.auth.portal.entity.CourseFeedback;
 import com.dhanesh.auth.portal.entity.Users;
+import com.dhanesh.auth.portal.repository.CourseFeedbackRepository;
+import com.dhanesh.auth.portal.repository.CourseShareRepository;
+import com.dhanesh.auth.portal.repository.ProfilePhotoRepository;
+import com.dhanesh.auth.portal.repository.SavedCourseRepository;
+import com.dhanesh.auth.portal.repository.StudentProfileRepository;
 import com.dhanesh.auth.portal.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+@Repository
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminUserService {
 
     private final UserRepository userRepository;
+    private final CourseShareRepository courseShareRepository;
+    private final ProfilePhotoRepository profilePhotoRepository;
+    private final SavedCourseRepository savedCourseRepository;
+    private final StudentProfileRepository studentProfileRepository;
+    private final CourseFeedbackRepository feedbackRepository;
 
+    
     /**
      * Promote a user to ADMIN role.
      * @param username username of the user
@@ -45,9 +56,24 @@ public class AdminUserService {
      */
     public boolean deleteUser(String username) {
         Optional<Users> user = userRepository.findByUsername(username);
+        
         if (user.isPresent()) {
-            userRepository.delete(user.get());
-            return true;
+            String id = user.get().getId();
+            
+            userRepository.deleteById(id);
+            profilePhotoRepository.deleteByUserId(id);
+            studentProfileRepository.deleteById(id);
+
+            savedCourseRepository.deleteByUserId(id);
+
+            List<CourseFeedback> feedbackList = feedbackRepository.findByUserId(id);
+            for (CourseFeedback f : feedbackList) {
+                f.setAnonymous(true);
+                f.setUserId(null);
+                feedbackRepository.save(f);
+            }
+
+            courseShareRepository.deleteByUserId(id);
         }
         return false;
     }

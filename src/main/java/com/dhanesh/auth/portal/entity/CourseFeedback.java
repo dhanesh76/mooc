@@ -31,4 +31,7 @@ public class CourseFeedback {
     private boolean enrolled;
     private String comments;
     private Instant submittedAt;
+
+
+    private boolean isAnonymous;
 }

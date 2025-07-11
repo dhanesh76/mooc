@@ -46,7 +46,11 @@ public class SecurityConfig {
                     "/api/auth/request-otp", 
                     "/api/auth/verify-otp", 
                     "/api/auth/forgot-password", 
-                    "/api/auth/reset-password"
+                    "/api/auth/reset-password",
+
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html"
                 ).permitAll() // public endpoints
                 
                 .requestMatchers(HttpMethod.GET, "/courses")

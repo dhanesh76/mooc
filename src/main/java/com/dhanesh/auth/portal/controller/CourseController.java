@@ -76,6 +76,6 @@ public class CourseController {
         Optional<Course> course = courseService.getCourseById(courseId);
         
        return course.isPresent() ? ResponseEntity.ok().body(course) 
-        : ResponseEntity.badRequest().body("Invalid COurse ID");
+        : ResponseEntity.badRequest().body("Invalid Course ID");
     }
 }

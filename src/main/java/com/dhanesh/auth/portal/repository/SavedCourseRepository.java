@@ -21,4 +21,6 @@ public interface SavedCourseRepository extends MongoRepository<SavedCourse, Stri
 
     //get the count of the courses saved by the user 
     long countByUserId(String userId);
+
+    void deleteByUserId(String id);
 }

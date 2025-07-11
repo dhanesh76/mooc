@@ -59,6 +59,7 @@ public class AdminUserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> deleteUser(@RequestParam String username){
         boolean response = adminUserService.deleteUser(username);
+        
         return response
             ? ResponseEntity.noContent().build()
             : ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User Not Found");

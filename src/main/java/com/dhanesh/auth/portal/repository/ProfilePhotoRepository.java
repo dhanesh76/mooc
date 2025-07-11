@@ -7,4 +7,6 @@ import com.dhanesh.auth.portal.entity.ProfilePhoto;
 
 @Repository
 public interface ProfilePhotoRepository extends MongoRepository<ProfilePhoto, String> {
+
+    void deleteByUserId(String id);
 }

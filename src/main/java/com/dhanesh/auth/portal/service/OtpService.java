@@ -2,16 +2,15 @@ package com.dhanesh.auth.portal.service;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.stereotype.Service;
 
 import com.dhanesh.auth.portal.dto.otp.OtpRequest;
 import com.dhanesh.auth.portal.dto.otp.OtpResponse;
+import com.dhanesh.auth.portal.dto.otp.OtpVerifyRequest;
 import com.dhanesh.auth.portal.model.OtpData;
 import com.dhanesh.auth.portal.model.OtpPurpose;
 import com.dhanesh.auth.portal.model.OtpValidationResult;
+import com.dhanesh.auth.portal.service.Redis.RedisOtpService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,22 +19,17 @@ import lombok.RequiredArgsConstructor;
 public class OtpService {
     
     private final EmailService emailService;
-    
-    private static final long EXPIRY_DURATION_SECONDS = 300; // OTP valid for 5 minutes
-    private final Map<String, OtpData> otpStorage = new ConcurrentHashMap<>();
-
+    private final RedisOtpService redisOtpService;
 
     /**
      * Generates a 6-digit numeric OTP, stores it against the user's email
      * with an expiration time, and returns the OTP.
      */
-    public String generateOtp(String email) {
+    public String generateOtp(String email, OtpPurpose purpose) {
+        
         String otp = String.format("%06d", new SecureRandom().nextInt(999999));
 
-        // Store OTP with expiration timestamp
-        OtpData data = new OtpData(otp, Instant.now().plusSeconds(EXPIRY_DURATION_SECONDS));
-
-        otpStorage.put(email, data);
+        redisOtpService.saveOtpData(email, new OtpData(otp, purpose));
         return otp;
     }
 
@@ -44,33 +38,36 @@ public class OtpService {
      * Checks for existence, expiry, and correctness.
      * OTP is consumed after successful validation.
      */
-    public OtpValidationResult validateOtp(String email, String providedOtp) {
-        OtpData otpData = otpStorage.get(email);
+    public OtpValidationResult validateOtp(OtpVerifyRequest request) {
+        
+        //Otp is either expired or not at all requested 
+        //must have been the case of expired because frontend would have 
+        //redirected to this only if they have requested for otp earlier 
+        if(!redisOtpService.hasKey(request.email()))
+            return new OtpValidationResult(false, "otp is expired, request for the new one ");
 
-        if (otpData == null) {
-            return new OtpValidationResult(false, "No OTP was requested for this email.");
-        }
+        OtpData generatedOtp = redisOtpService.getOtpData(request.email());
 
-        if (Instant.now().isAfter(otpData.expiry())) {
-            otpStorage.remove(email); // Auto-clean expired OTP
-            return new OtpValidationResult(false, "OTP has expired. Please request a new one.");
-        }
+        /*
+         * purpose of the otp mismatches 
+         * not all possible cause user would have been able to request to 
+         * reset password only if he already had registered
+         */
+        if(generatedOtp.purpose() != request.purpose())
+            return new OtpValidationResult(false, "otp purpose mismatch");
 
-        if (!otpData.otp().equals(providedOtp)) {
-            return new OtpValidationResult(false, "Invalid OTP. Please try again.");
-        }
+        //invalid otp
+        if(!generatedOtp.otp().equals(request.otp()))
+            return new OtpValidationResult(false, "wrong otp");
 
-        otpStorage.remove(email); // OTP is consumed after success
-        return new OtpValidationResult(true, "OTP validated successfully.");
+        /*
+         * if success fully verified remove the entry 
+         */
+        redisOtpService.deleteOtpData(request.email());
+    
+        return new OtpValidationResult(true, "verified successfully");
     }
-
-    /**
-     * Forcefully clears OTP from storage (used optionally).
-     */
-    public void clearOtp(String email) {
-        otpStorage.remove(email);
-    }
-
+    
     /**
      * Handles sending OTP based on purpose:
      * - For PASSWORD_RESET or VERIFICATION
@@ -81,7 +78,7 @@ public class OtpService {
         String email = otpRequest.email();
         OtpPurpose purpose = otpRequest.purpose();
 
-        String otp = generateOtp(email); // Generate and store OTP
+        String otp = generateOtp(email, purpose); // Generate and store OTP
 
         String subject;
         String body;

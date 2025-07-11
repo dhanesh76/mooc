@@ -10,4 +10,6 @@ import com.dhanesh.auth.portal.entity.CourseShare;
 @Repository
 public interface CourseShareRepository extends MongoRepository<CourseShare, String> {
     List<CourseShare> findByCourseId(String courseId);
+
+    void deleteByUserId(String id);
 }
