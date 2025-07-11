@@ -22,11 +22,11 @@ public class RedisOtpService {
     @Value("${app.otp.duration}")
     private long otpDuration;
 
-    public void saveOtp(String email, OtpData otpData) {
+    public void saveOtpData(String email, OtpData otpData) {
         redisTemplate.opsForValue().set(email, otpData, otpDuration, TimeUnit.MINUTES);
     }
 
-    public OtpData getOtp(String email) {
+    public OtpData getOtpData(String email) {
         return (OtpData) redisTemplate.opsForValue().get(email);
     }
 
@@ -34,7 +34,7 @@ public class RedisOtpService {
         return redisTemplate.hasKey(email);
     }
 
-    public void deleteOtp(String email) {
+    public void deleteOtpData(String email) {
         redisTemplate.delete(email);
     }
 }

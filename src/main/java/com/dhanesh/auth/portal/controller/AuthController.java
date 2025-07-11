@@ -24,7 +24,9 @@ import com.dhanesh.auth.portal.model.OtpValidationResult;
 import com.dhanesh.auth.portal.security.jwt.JwtService;
 import com.dhanesh.auth.portal.service.AuthService;
 import com.dhanesh.auth.portal.service.OtpService;
+import com.dhanesh.auth.portal.service.Redis.RedisRateLimitService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -36,6 +38,7 @@ public class AuthController {
     private final AuthService userService;
     private final OtpService otpService;
     private final JwtService jwtService;
+    private final RedisRateLimitService rateLimitService;
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest signupRequest) {
@@ -60,17 +63,16 @@ public class AuthController {
             ));
         }
 
+      
         if (request.purpose() == OtpPurpose.VERIFICATION) {
-            if (userService.isRegisterSessionExpired(request.email())) {
-                return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body(
-                    Map.of("message", "Registration session expired. Please register again.")
-                );
+            if (!userService.isRegisterSessionValid(request.email())) {
+                return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+                        .body(Map.of("message", "Session expired. Please register again."));
             }
 
             userService.saveNewUser(request.email());
-            return ResponseEntity.status(HttpStatus.CREATED).body(
-                Map.of("message", "User registered successfully. Please login.")
-            );
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(Map.of("message", "User registered successfully. Continue to login."));
         }
 
         // OTP for password reset
@@ -83,7 +85,25 @@ public class AuthController {
     }
 
     @PostMapping("/request-otp")
-    public ResponseEntity<OtpResponse> requestOtp(@Valid @RequestBody OtpRequest request) {
+    public ResponseEntity<OtpResponse> requestOtp(@Valid @RequestBody OtpRequest request, HttpServletRequest servletRequest) {
+
+        String clientIp = userService.getClientIp(servletRequest);
+        
+        if(rateLimitService.isInCooldown(clientIp)){
+              return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new OtpResponse("Please wait 30 seconds before requesting again", Instant.now()));
+        }
+
+        if (!rateLimitService.isAllowed(clientIp)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new OtpResponse("Too many OTP requests from this IP. Try again later.", Instant.now()));
+        }
+
+        if (request.purpose() == OtpPurpose.PASSWORD_RESET &&
+            !userService.emailExists(request.email())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new OtpResponse("Email not registered", Instant.now()));
+        }        
         return ResponseEntity.ok(otpService.sendOtp(request));
     }
 

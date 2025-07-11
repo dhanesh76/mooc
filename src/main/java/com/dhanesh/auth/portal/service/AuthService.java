@@ -21,6 +21,7 @@ import com.dhanesh.auth.portal.repository.UserRepository;
 import com.dhanesh.auth.portal.security.jwt.JwtService;
 import com.dhanesh.auth.portal.service.Redis.RedisAuthService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -96,7 +97,7 @@ public class AuthService {
      * Saves a verified user from Redis to DB after OTP verification.
      */
     public void saveNewUser(String email) {
-        SignupTempData tempData = redisAuthService.getSignupData(email)
+        SignupTempData tempData = redisAuthService.getSignupData("signup:" + email)
                 .orElseThrow(() -> new RuntimeException("Session expired or not found"));
 
         Users user = new Users();
@@ -109,13 +110,13 @@ public class AuthService {
         user.setCreatedAt(Instant.now());
 
         userRepo.save(user);
-        redisAuthService.deleteSignupData(email);
+        redisAuthService.deleteSignupData(email, tempData.username());
     }
 
     /**
      * Checks whether a registration session exists in Redis.
      */
-    public boolean isRegisterSessionExpired(String email) {
+    public boolean isRegisterSessionValid(String email) {
         return !redisAuthService.hasKey("signup:" + email);
     }
 
@@ -129,12 +130,17 @@ public class AuthService {
 
         String token = authHeader.substring(7);
 
+        if(!jwtService.extractLoginId(token).equals(request.email())){
+            return Map.of("valid", false, "message", "Email Mismatch");
+        }
+
         if (jwtService.isTokenExpired(token)) {
             return Map.of("valid", false, "message", "Token expired.");
         }
 
         Boolean isVerified = jwtService.extractClaim(token, claims -> claims.get("otp_verified", Boolean.class));
         String type = jwtService.extractClaim(token, claims -> claims.get("token_type", String.class));
+
 
         if (!Boolean.TRUE.equals(isVerified) || !"otp".equals(type)) {
             return Map.of("valid", false, "message", "Invalid or unauthorized token.");
@@ -151,5 +157,18 @@ public class AuthService {
                 .orElseThrow(() -> new AuthenticationFailedException("User not found"));
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepo.save(user);
+    }
+
+    public boolean emailExists(String email){
+        return userRepo.existsByEmail(email);
+    }
+
+    public String getClientIp(HttpServletRequest servletRequest) {
+        String header = servletRequest.getHeader("X-Forwarded-For");
+
+        if(header != null)
+            return header.split(", ")[0];
+        
+        return servletRequest.getRemoteAddr();
     }
 }

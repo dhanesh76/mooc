@@ -19,11 +19,13 @@ import lombok.RequiredArgsConstructor;
 public class RedisAuthService {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> userNameCache;
 
     @Value("${app.session.duration}")
     private long sessionTTL;
 
     public void storeSignupData(String email, SignupTempData data) {
+        userNameCache.opsForValue().set(data.username(), true, sessionTTL, TimeUnit.MINUTES);
         redisTemplate.opsForValue().set("signup:" + email, data, sessionTTL, TimeUnit.MINUTES);
     }
 
@@ -37,16 +39,15 @@ public class RedisAuthService {
     }
 
     public boolean existsByUsername(String username) {
-        return redisTemplate.keys("signup:*").stream()
-                .map(key -> (SignupTempData) redisTemplate.opsForValue().get(key))
-                .anyMatch(data -> data != null && data.username().equals(username));
+        return userNameCache.hasKey(username);
     }
 
     public boolean hasKey(String key) {
         return redisTemplate.hasKey(key);
     }
 
-    public void deleteSignupData(String email) {
+    public void deleteSignupData(String email, String userName) {
         redisTemplate.delete("signup:" + email);
+        userNameCache.delete(userName);
     }
 }

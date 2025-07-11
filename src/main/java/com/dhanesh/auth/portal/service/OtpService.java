@@ -29,7 +29,7 @@ public class OtpService {
         
         String otp = String.format("%06d", new SecureRandom().nextInt(999999));
 
-        redisOtpService.saveOtpData(email, new OtpData(otp, purpose));
+        redisOtpService.saveOtpData("otp:" + email, new OtpData(otp, purpose));
         return otp;
     }
 
@@ -40,13 +40,15 @@ public class OtpService {
      */
     public OtpValidationResult validateOtp(OtpVerifyRequest request) {
         
+        String key = "otp:"+request.email();
+        
         //Otp is either expired or not at all requested 
         //must have been the case of expired because frontend would have 
         //redirected to this only if they have requested for otp earlier 
-        if(!redisOtpService.hasKey(request.email()))
+        if(!redisOtpService.hasKey(key))
             return new OtpValidationResult(false, "otp is expired, request for the new one ");
 
-        OtpData generatedOtp = redisOtpService.getOtpData(request.email());
+        OtpData generatedOtp = redisOtpService.getOtpData(key);
 
         /*
          * purpose of the otp mismatches 
@@ -63,7 +65,7 @@ public class OtpService {
         /*
          * if success fully verified remove the entry 
          */
-        redisOtpService.deleteOtpData(request.email());
+        redisOtpService.deleteOtpData(key);
     
         return new OtpValidationResult(true, "verified successfully");
     }
