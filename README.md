@@ -99,16 +99,14 @@ OTP_RATE_LIMIT_DURATION=5
 ```bash
 mvn spring-boot:run
 ```
-
 ---
+### 📖 API Documentation
 
-## 🔍 API Documentation
+[![Swagger UI](https://img.shields.io/badge/Swagger-UI-blue?logo=swagger)](https://dhanesh76.github.io/mooc/swagger.html)
+[![OpenAPI Spec](https://img.shields.io/badge/OpenAPI-Spec-yellow?logo=openapi)](https://dhanesh76.github.io/mooc/openapi.json)
 
-* **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-* **OpenAPI Spec:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
-  → Also saved at `docs/openapi.json`
-* **ReDoc Static Docs:** `docs/redoc.html`
-  → You can host this on GitHub Pages or Netlify.
+📁 These files are also available in the [`docs/`](./docs) folder of this repository.
+
 
 ---
 
