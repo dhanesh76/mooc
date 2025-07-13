@@ -5,9 +5,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.dhanesh.auth.portal.entity.AuthProvider;
 import com.dhanesh.auth.portal.entity.Users;
 import com.dhanesh.auth.portal.exception.AuthenticationFailedException;
+import com.dhanesh.auth.portal.model.AuthProvider;
 import com.dhanesh.auth.portal.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;

@@ -3,6 +3,7 @@ package com.dhanesh.auth.portal.service;
 import java.time.Instant;
 import java.util.Map;
 
+import java.util.Optional;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -11,11 +12,11 @@ import org.springframework.stereotype.Service;
 
 import com.dhanesh.auth.portal.dto.auth.*;
 import com.dhanesh.auth.portal.dto.otp.OtpRequest;
-import com.dhanesh.auth.portal.entity.AuthProvider;
 import com.dhanesh.auth.portal.entity.Users;
 import com.dhanesh.auth.portal.exception.AuthenticationFailedException;
 import com.dhanesh.auth.portal.exception.EmailAlreadyInUseException;
 import com.dhanesh.auth.portal.exception.UsernameAlreadyTakenException;
+import com.dhanesh.auth.portal.model.AuthProvider;
 import com.dhanesh.auth.portal.model.OtpPurpose;
 import com.dhanesh.auth.portal.repository.UserRepository;
 import com.dhanesh.auth.portal.security.jwt.JwtService;
@@ -23,6 +24,12 @@ import com.dhanesh.auth.portal.service.Redis.RedisAuthService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+
+/**
+ * Handles user authentication and registration logic.
+ * Integrates with Redis for temp user storage and OTP validation.
+ * Issues JWT tokens for session management.
+ */
 
 @Service
 @RequiredArgsConstructor
@@ -43,9 +50,20 @@ public class AuthService {
         String email = credentials.email();
 
         // Check if email/username already exists (DB or Redis cache)
-        if (userRepo.findByEmail(email).isPresent() || redisAuthService.existsByEmail(email)) {
+        if (userRepo.findByEmail(email).isPresent()) {
             throw new EmailAlreadyInUseException("Email already taken.");
         }
+
+        Optional<SignupTempData> existingSignup = redisAuthService.getSignupData(email);
+        if (existingSignup.isPresent()) {            
+            return new SignupResponse(
+                existingSignup.get().username(),
+                email,
+                "You already started registration. Please verify OTP sent to your email.",
+                AuthProvider.LOCAL
+                );
+        }
+
 
         if (userRepo.findByUsername(username).isPresent() || redisAuthService.existsByUsername(username)) {
             throw new UsernameAlreadyTakenException("Username already taken.");
@@ -97,7 +115,7 @@ public class AuthService {
      * Saves a verified user from Redis to DB after OTP verification.
      */
     public void saveNewUser(String email) {
-        SignupTempData tempData = redisAuthService.getSignupData("signup:" + email)
+        SignupTempData tempData = redisAuthService.getSignupData(email)
                 .orElseThrow(() -> new RuntimeException("Session expired or not found"));
 
         Users user = new Users();
@@ -117,7 +135,7 @@ public class AuthService {
      * Checks whether a registration session exists in Redis.
      */
     public boolean isRegisterSessionValid(String email) {
-        return !redisAuthService.hasKey("signup:" + email);
+        return redisAuthService.hasKey("signup:" + email);
     }
 
     /**

@@ -9,5 +9,4 @@ class AuthPortalApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }

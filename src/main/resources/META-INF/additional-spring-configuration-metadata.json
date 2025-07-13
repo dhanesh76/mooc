@@ -1,22 +1,39 @@
-{"properties": [
-  {
-    "name": "jwt.secret",
-    "type": "java.lang.String",
-    "description": "A description for 'jwt.secret'"
-  },
-  {
-    "name": "jwt.expiration",
-    "type": "java.lang.String",
-    "description": "A description for 'jwt.expiration'"
-  },
-  {
-    "name": "app.session.duration",
-    "type": "java.lang.long",
-    "description": "A description for 'app.session.duration'"
-  },
-  {
-    "name": "app.otp.duration",
-    "type": "java.lang.long",
-    "description": "A description for 'app.otp.duration'"
-  }
-]}
+{
+  "properties": [
+    {
+      "name": "ip.otp.limit.duration",
+      "type": "java.lang.Long",
+      "description": "Duration (in minutes) for which OTP request limits apply per IP."
+    },
+    {
+      "name": "ip.otp.limit",
+      "type": "java.lang.Integer",
+      "description": "Maximum number of OTP requests allowed per IP within the rate limit window."
+    },
+    {
+      "name": "otp.cooldown",
+      "type": "java.lang.Long",
+      "description": "Cooldown period (in seconds) between consecutive OTP requests from the same IP."
+    },
+    {
+      "name": "app.otp.duration",
+      "type": "java.lang.Long",
+      "description": "Expiration duration (in minutes) for OTP validity."
+    },
+    {
+      "name": "jwt.expiration",
+      "type": "java.lang.Long",
+      "description": "JWT token expiration duration (in milliseconds)."
+    },
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "Secret key used for signing JWT tokens. Should be stored securely."
+    },
+    {
+      "name": "app.session.duration",
+      "type": "java.lang.Long",
+      "description": "Time (in minutes) a temporary signup session is valid in Redis."
+    }
+  ]
+}

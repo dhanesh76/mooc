@@ -1,4 +1,4 @@
-package com.dhanesh.auth.portal.entity;
+package com.dhanesh.auth.portal.model;
 
 public enum AuthProvider {
     LOCAL,

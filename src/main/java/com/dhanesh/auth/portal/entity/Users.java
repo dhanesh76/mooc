@@ -6,10 +6,12 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.dhanesh.auth.portal.model.AuthProvider;
+
 import lombok.Data;
 
 @Data
-@Document(collection = "users") // This replaces @Entity and @Table
+@Document(collection = "users") 
 public class Users {
 
     @Id

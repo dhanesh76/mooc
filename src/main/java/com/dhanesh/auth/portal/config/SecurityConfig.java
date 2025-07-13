@@ -12,6 +12,11 @@ import com.dhanesh.auth.portal.security.jwt.JwtAuthenticationFilter;
 import org.springframework.security.authentication.AuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Security configuration class that defines the security filter chain for the application.
+ * Configures stateless session management, JWT authentication, public endpoints, and 
+ * role-based access control for protected resources.
+ */
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -23,21 +28,18 @@ public class SecurityConfig {
      * Defines the security filter chain for the application.
      * Handles CORS, CSRF, session management, authorization rules,
      * and JWT filter integration.
+     *
+     * @param http the HttpSecurity instance to configure
+     * @return configured SecurityFilterChain
+     * @throws Exception if configuration fails
      */
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Enable default CORS settings
             .cors(Customizer.withDefaults())
-
-            // Disable CSRF since the app uses stateless JWT-based auth
             .csrf(csrf -> csrf.disable())
-
-            // No session will be created or used by Spring Security
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-            // Authorization rules for different endpoint access
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/", 
@@ -47,26 +49,16 @@ public class SecurityConfig {
                     "/api/auth/verify-otp", 
                     "/api/auth/forgot-password", 
                     "/api/auth/reset-password",
-
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html"
-                ).permitAll() // public endpoints
-                
-                .requestMatchers(HttpMethod.GET, "/courses")
-                .permitAll()
-                
-                .requestMatchers(HttpMethod.POST, "/share-course")
-                .permitAll()
-
-                .requestMatchers("/admin/**").hasRole("ADMIN") // role-based access
-                .anyRequest().authenticated() // all other requests require authentication
+                ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/courses").permitAll()
+                .requestMatchers(HttpMethod.POST, "/share-course").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
             )
-
-            // Attach the custom AuthenticationProvider
             .authenticationProvider(authenticationProvider)
-
-            // Add custom JWT filter before the UsernamePasswordAuthenticationFilter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -4,9 +4,15 @@ import com.dhanesh.auth.portal.dto.StudentProfileRequest;
 import com.dhanesh.auth.portal.entity.StudentProfile;
 import com.dhanesh.auth.portal.security.userdetails.UserPrincipal;
 import com.dhanesh.auth.portal.service.StudentProfileService;
-import lombok.RequiredArgsConstructor;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * REST controller for managing student profiles.
  */
+@Tag(name = "Student Profile", description = "Endpoints for creating, updating, and fetching student profiles")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/profile")
@@ -24,14 +31,12 @@ public class StudentProfileController {
 
     /**
      * Creates a new student profile for the authenticated user.
-     *
-     * @param principal the authenticated user principal
-     * @param request the student profile data
-     * @return created profile or error response
      */
+    @Operation(summary = "Create student profile", description = "Creates a profile for the logged-in user.")
     @PostMapping
     public ResponseEntity<?> createProfile(
-        @AuthenticationPrincipal UserPrincipal principal,
+        @AuthenticationPrincipal
+        @Parameter(description = "Authenticated user") UserPrincipal principal,
         @Valid @RequestBody StudentProfileRequest request
     ) {
         try {
@@ -44,14 +49,12 @@ public class StudentProfileController {
 
     /**
      * Updates the student profile of the authenticated user.
-     *
-     * @param principal the authenticated user principal
-     * @param request the updated profile data
-     * @return updated profile or error response
      */
+    @Operation(summary = "Update student profile", description = "Updates the profile of the authenticated user.")
     @PutMapping
     public ResponseEntity<?> updateProfile(
-        @AuthenticationPrincipal UserPrincipal principal,
+        @AuthenticationPrincipal
+        @Parameter(description = "Authenticated user") UserPrincipal principal,
         @Valid @RequestBody StudentProfileRequest request
     ) {
         try {
@@ -64,24 +67,25 @@ public class StudentProfileController {
 
     /**
      * Checks whether the authenticated user's profile is completed.
-     *
-     * @param principal the authenticated user principal
-     * @return true if profile is completed, false otherwise
      */
+    @Operation(summary = "Check profile status", description = "Returns true if the user has completed their profile.")
     @GetMapping("/status")
-    public ResponseEntity<Boolean> checkProfileCompleted(@AuthenticationPrincipal UserPrincipal principal) {
+    public ResponseEntity<Boolean> checkProfileCompleted(
+        @AuthenticationPrincipal
+        @Parameter(description = "Authenticated user") UserPrincipal principal) {
         return ResponseEntity.ok(studentProfileService.isProfileCompleted(principal.getUser().getId()));
     }
 
     /**
      * Retrieves the profile of the authenticated user.
-     * Access is restricted if the profile is not marked as completed.
-     *
-     * @param principal the authenticated user principal
-     * @return student profile or error response
+     * Restricted if profile is not yet completed.
      */
+    @Operation(summary = "Get student profile", description = "Returns the user's profile if it has been completed.")
     @GetMapping
-    public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
+    public ResponseEntity<?> getProfile(
+        @AuthenticationPrincipal
+        @Parameter(description = "Authenticated user") UserPrincipal principal) {
+
         String id = principal.getUser().getId();
 
         if (!studentProfileService.isProfileCompleted(id)) {

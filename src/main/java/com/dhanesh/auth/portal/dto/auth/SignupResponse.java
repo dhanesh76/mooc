@@ -1,6 +1,6 @@
 package com.dhanesh.auth.portal.dto.auth;
 
-import com.dhanesh.auth.portal.entity.AuthProvider;
+import com.dhanesh.auth.portal.model.AuthProvider;
 
 public record SignupResponse (
     String username,

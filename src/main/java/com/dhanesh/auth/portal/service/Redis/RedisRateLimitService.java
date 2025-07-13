@@ -43,12 +43,19 @@ public class RedisRateLimitService {
     public boolean isAllowed(String ip) {
         String rateKey = "authportal:rate:ip:" + ip;
 
-        long count = template.opsForValue().increment(rateKey);
+        Long incrementResult = template.opsForValue().increment(rateKey);
+        long count = (incrementResult != null) ? incrementResult : 0L;
 
         if (count == 1L) {
             template.expire(rateKey, duration, TimeUnit.MINUTES);
         }
 
         return count <= otpLimit;
+    }
+
+    public long getCooldownRemaining(String ip) {
+        String cooldownKey = "authportal:cooldown:ip:" + ip;
+        Long remaining = template.getExpire(cooldownKey, TimeUnit.SECONDS);
+        return (remaining != null && remaining > 0) ? remaining : 0;
     }
 }
