@@ -136,9 +136,6 @@ You can try out all the tested API endpoints using the Postman collection below:
 
 [![Run in Postman](https://run.pstmn.io/button.svg)](https://dhaneshv.postman.co/workspace/Dhanesh-V's-Workspace~637ce80a-f746-4ef0-8b8b-c30f24567016/collection/45135482-405d8e61-ecd0-4a48-a2f2-a7cb9e83b8af?action=share&creator=45135482)
 
-Or open directly:  
-👉 [Postman Collection (Public)](https://dhaneshv.postman.co/workspace/Dhanesh-V's-Workspace~637ce80a-f746-4ef0-8b8b-c30f24567016/collection/45135482-405d8e61-ecd0-4a48-a2f2-a7cb9e83b8af?action=share&creator=45135482)
-
 ---
 
 ## 🪪 License
