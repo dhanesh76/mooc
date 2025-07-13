@@ -1,17 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>MOOC API Docs</title>
-    <meta charset="utf-8" />
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
-    </style>
+    <meta charset="UTF-8" />
+    <title>MOOC API Docs - Swagger UI</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css" />
   </head>
   <body>
-    <redoc spec-url="https://dhanesh76.github.io/mooc/openapi.json"></redoc>
+    <div id="swagger-ui"></div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
+    <script>
+      window.onload = () => {
+        SwaggerUIBundle({
+          url: "https://dhanesh76.github.io/mooc/openapi.json",
+          dom_id: "#swagger-ui",
+          deepLinking: true,
+          presets: [SwaggerUIBundle.presets.apis],
+          layout: "BaseLayout",
+        });
+      };
+    </script>
   </body>
 </html>
