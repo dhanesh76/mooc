@@ -14,7 +14,6 @@ This project enables users to register, receive personalized course suggestions,
 - 📬 **Spring Mail (Gmail SMTP)**
 - 🛡 **Spring Security with JWT**
 - 💾 **Redis Cloud** – OTP, signup session, rate-limiting
-- 🧪 **JUnit** + **Mockito**
 - 📖 **SpringDoc OpenAPI (Swagger UI + ReDoc)**
 
 ---
