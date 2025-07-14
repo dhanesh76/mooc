@@ -8,7 +8,7 @@ public record StudentProfileRequest(
     String phoneNumber,
     @NotBlank String educationLevel,
     @NotBlank String preferredPlatform,
-    @NotBlank List<String> primaryInterests,
+    @NotEmpty List<String> primaryInterests,
     String learningGoals,
     @NotBlank String preferredDifficultyLevel,
     List<String> hobbies
